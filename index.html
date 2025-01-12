@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Twitter Trends</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <link
+      rel="icon"
+      href="https://abs.twimg.com/favicons/twitter.ico"
+      type="image/x-icon"
+    />
+  </head>
+  <style>
+    body,
+    h1,
+    h2,
+    p,
+    ul,
+    li,
+    a,
+    button {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Arial", sans-serif;
+    }
+
+    /* Body Styles */
+    body {
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    /* Navbar */
+    .navbar {
+      background-color: #253a47;
+      color: #ffffff;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo img {
+      height: 40px;
+      margin-right: 20px;
+      margin-left: 48px;
+    }
+
+    .logo h1 {
+      font-size: 20px;
+    }
+
+    /* Container */
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    /* Heading and Paragraph */
+    h2 {
+      font-size: 24px;
+      margin-bottom: 15px;
+      color: #1c3545;
+    }
+
+    p {
+      font-size: 16px;
+      margin-bottom: 20px;
+      color: #555;
+    }
+
+    /* Button */
+    .btn-primary {
+      background-color: #3a4348;
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    .btn-primary:hover {
+      background-color: #0d8cd2;
+      transform: scale(1.05);
+    }
+
+    /* Loading Indicator */
+    .loading {
+      font-size: 16px;
+      color: #555;
+      margin-top: 15px;
+    }
+
+    /* Trends List */
+    .trends-list {
+      list-style: none;
+      margin-top: 20px;
+    }
+
+    .trends-list li {
+      font-size: 18px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #f0f8ff;
+      border: 1px solid #e0e4e8;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+    }
+
+    .trend-number {
+      font-weight: bold;
+      color: #313f48;
+      margin-right: 10px;
+    }
+
+    /* Error Message */
+    .error {
+      color: #ff0000;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 15px;
+      background: #f0f0f0;
+      font-size: 14px;
+      color: #666;
+      margin-top: 30px;
+    }
+  </style>
+  <body>
+    <header class="navbar">
+      <div class="logo">
+        <img
+          src="https://i.pinimg.com/originals/99/65/5e/99655e9fe24eb0a7ea38de683cedb735.jpg"
+          alt="Twitter Logo"
+        />
+        <h1>Twitter Trends</h1>
+      </div>
+    </header>
+    <main class="container">
+      <section class="content">
+        <h2>Discover the Latest Twitter Trends</h2>
+        <p>
+          Click the button below to see what's trending on Twitter right now.
+        </p>
+        <button id="fetch-button" class="btn-primary">
+          Click here to run the script.
+        </button>
+        <div id="loading" class="loading" style="display: none">
+          Fetching trends...
+        </div>
+
+        <div id="result" class="result" style="display: none">
+          <p>
+            <strong
+              >These are the most happening topics as on
+              <span id="datetime"></span
+            ></strong>
+          </p>
+          <ul id="trending-topics" class="trends-list">
+            <!-- Dynamic content goes here -->
+          </ul>
+          <p>
+            <strong
+              >The IP address used for this query was
+              <span id="ip-address"></span>.</strong
+            >
+          </p>
+          <h3>Here's a JSON extract of this record from the MongoDB:</h3>
+          <pre id="json-output"></pre>
+          <button id="fetch-again-button" class="btn-primary">
+            Click here to run the query again.
+          </button>
+        </div>
+      </section>
+    </main>
+  </body>
+  <script>
+    const button = document.getElementById("fetch-button");
+    const result = document.getElementById("result");
+    const loading = document.getElementById("loading");
+    const datetimeEl = document.getElementById("datetime");
+    const ipAddressEl = document.getElementById("ip-address");
+    const trendingTopicsEl = document.getElementById("trending-topics");
+    const jsonOutputEl = document.getElementById("json-output");
+    const fetchAgainButton = document.getElementById("fetch-again-button");
+
+    button.addEventListener("click", () => {
+      trendingTopicsEl.innerHTML = ""; // Clear previous results
+      jsonOutputEl.textContent = ""; // Clear previous JSON
+      result.style.display = "none"; // Hide result section
+      loading.style.display = "block"; // Show loading indicator
+
+      fetch("/trends")
+        .then((response) => response.json())
+        .then((data) => {
+          loading.style.display = "none"; // Hide loading indicator
+          datetimeEl.textContent = data.date_time; // Display date and time
+          ipAddressEl.textContent = data.ip_address; // Display IP address
+
+          // Display trending topics
+          data.trends.forEach((topic, index) => {
+            const li = document.createElement("li");
+            li.textContent = `${index + 1}. ${topic}`;
+            trendingTopicsEl.appendChild(li);
+          });
+
+          // Display MongoDB JSON data
+          jsonOutputEl.textContent = JSON.stringify(data.trends_json, null, 2);
+          result.style.display = "block"; // Show result section
+        })
+        .catch((error) => {
+          loading.style.display = "none"; // Hide loading indicator
+          const li = document.createElement("li");
+          li.textContent = "Failed to fetch trends. Please try again.";
+          li.classList.add("error");
+          trendingTopicsEl.appendChild(li);
+        });
+    });
+
+    fetchAgainButton.addEventListener("click", () => {
+      location.reload();
+    });
+  </script>
+</html>
